@@ -1,0 +1,506 @@
+{# core/templates/core/dashboard_riesgo.html #}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Riesgo &middot; {{ solicitud_id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --color-bg: #F4F5F9;
+      --color-surface: #FFFFFF;
+      --color-ink: #1E1B3A;
+      --color-ink-soft: #635E82;
+      --color-primary: #3730A6;
+      --color-primary-hover: #2B2680;
+      --color-border: #E2E1EF;
+
+      --color-green: #157A4A;
+      --color-green-soft: #E7F5EE;
+      --color-amber: #B8720C;
+      --color-amber-soft: #FDF1E1;
+      --color-red: #B3412C;
+      --color-red-soft: #FBEAE6;
+      --color-slate: #635E82;
+      --color-slate-soft: #ECEBF5;
+
+      --font-display: 'IBM Plex Mono', 'Courier New', monospace;
+      --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--color-bg);
+      background-image:
+        radial-gradient(circle at 1px 1px, var(--color-border) 1px, transparent 0);
+      background-size: 22px 22px;
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    a {
+      color: var(--color-primary);
+    }
+
+    .topbar {
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
+      padding: 18px 24px;
+    }
+
+    .topbar__inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-family: var(--font-display);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+    }
+
+    .brand span {
+      color: #B9B4F5;
+    }
+
+    .topbar__tag {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      background: #EEEDFB;
+      border: 1px solid #C9C4F0;
+      padding: 4px 10px;
+      border-radius: 3px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--color-ink-soft);
+      margin: 0 0 24px;
+    }
+
+    .notice {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      font-size: 14px;
+      background: var(--color-red-soft);
+      border: 1px solid var(--color-red);
+      color: var(--color-red);
+    }
+
+    .notice__icon {
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+
+    /* --- Resumen de la solicitud --- */
+
+    .resumen {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 2px rgba(30, 27, 58, 0.04), 0 8px 24px rgba(30, 27, 58, 0.06);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .resumen__datos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+    }
+
+    .resumen__item .label {
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-ink-soft);
+      margin-bottom: 3px;
+    }
+
+    .resumen__item .value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .resumen__item .value.mono {
+      font-family: var(--font-display);
+    }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      background: var(--color-primary);
+      border: none;
+      border-radius: var(--radius);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-refresh:hover {
+      background: var(--color-primary-hover);
+    }
+
+    /* --- Grilla de fuentes de riesgo --- */
+
+    .fuentes-header {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-soft);
+      margin: 0 0 14px;
+    }
+
+    .grid-fuentes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .fuente-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 2px rgba(30, 27, 58, 0.04), 0 8px 24px rgba(30, 27, 58, 0.06);
+      overflow: hidden;
+    }
+
+    .fuente-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .fuente-card__titulo {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-pill--ok {
+      color: var(--color-green);
+      background: var(--color-green-soft);
+      border-color: var(--color-green);
+    }
+
+    .status-pill--error {
+      color: var(--color-red);
+      background: var(--color-red-soft);
+      border-color: var(--color-red);
+    }
+
+    .fuente-card__body {
+      padding: 18px;
+    }
+
+    .fuente-card__error {
+      font-size: 13px;
+      color: var(--color-red);
+    }
+
+    .dato {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+
+    .dato:last-child {
+      border-bottom: none;
+    }
+
+    .dato .label {
+      color: var(--color-ink-soft);
+    }
+
+    .dato .value {
+      font-weight: 500;
+    }
+
+    .dato .value.mono {
+      font-family: var(--font-display);
+    }
+
+    .riesgo-tag {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 3px;
+    }
+
+    .riesgo-tag--bajo {
+      color: var(--color-green);
+      background: var(--color-green-soft);
+    }
+
+    .riesgo-tag--medio {
+      color: var(--color-amber);
+      background: var(--color-amber-soft);
+    }
+
+    .riesgo-tag--alto {
+      color: var(--color-red);
+      background: var(--color-red-soft);
+    }
+
+    .bool-tag {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 3px;
+    }
+
+    .bool-tag--positivo {
+      color: var(--color-green);
+      background: var(--color-green-soft);
+    }
+
+    .bool-tag--negativo {
+      color: var(--color-red);
+      background: var(--color-red-soft);
+    }
+
+    @media (max-width: 600px) {
+      .shell {
+        padding: 24px 14px 48px;
+      }
+
+      .resumen {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-refresh {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="topbar__inner">
+      <span class="brand">Riesgo<span>Score</span> &middot; Panel de revisión</span>
+      <span class="topbar__tag">Consulta en vivo &middot; No persiste respuestas</span>
+    </div>
+  </div>
+
+  <div class="shell">
+    <span class="eyebrow">Dashboard de riesgo</span>
+    <h1>Solicitud {{ solicitud_id }}</h1>
+    <p class="subtitle">Señales de riesgo consultadas en tiempo real desde fuentes independientes.</p>
+
+    {% if error_solicitud %}
+    <div class="notice">
+      <span class="notice__icon">!</span>
+      <span>{{ error_solicitud }}</span>
+    </div>
+    {% else %}
+    <div class="resumen">
+      <div class="resumen__datos">
+        <div class="resumen__item">
+          <div class="label">Solicitante</div>
+          <div class="value">{{ solicitud.nombre_solicitante }}</div>
+        </div>
+        <div class="resumen__item">
+          <div class="label">Monto solicitado</div>
+          <div class="value">${{ solicitud.monto_solicitado }}</div>
+        </div>
+        <div class="resumen__item">
+          <div class="label">Estado de la solicitud</div>
+          <div class="value">{{ solicitud.get_estado_display }}</div>
+        </div>
+        <div class="resumen__item">
+          <div class="label">Fecha</div>
+          <div class="value mono">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+      <a href="{% url 'core:dashboard_riesgo_refresh' solicitud_id %}" class="btn-refresh">&#8635; Actualizar
+        señales</a>
+    </div>
+
+    <div class="fuentes-header">Señales de riesgo &middot; 3 fuentes independientes</div>
+
+    <div class="grid-fuentes">
+
+      {# --- Score --- #}
+      <div class="fuente-card">
+        <div class="fuente-card__header">
+          <span class="fuente-card__titulo">Score crediticio</span>
+          {% if fuentes.score.disponible %}
+          <span class="status-pill status-pill--ok">Cargado</span>
+          {% else %}
+          <span class="status-pill status-pill--error">No disponible</span>
+          {% endif %}
+        </div>
+        <div class="fuente-card__body">
+          {% if fuentes.score.disponible %}
+          <div class="dato">
+            <span class="label">Puntaje</span>
+            <span class="value mono">{{ fuentes.score.datos.score }}</span>
+          </div>
+          <div class="dato">
+            <span class="label">Categoría</span>
+            <span class="riesgo-tag riesgo-tag--{{ fuentes.score.datos.categoria_riesgo }}">
+              {{ fuentes.score.datos.categoria_riesgo }}
+            </span>
+          </div>
+          {% else %}
+          <p class="fuente-card__error">{{ fuentes.score.error }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {# --- Mora --- #}
+      <div class="fuente-card">
+        <div class="fuente-card__header">
+          <span class="fuente-card__titulo">Historial de mora</span>
+          {% if fuentes.mora.disponible %}
+          <span class="status-pill status-pill--ok">Cargado</span>
+          {% else %}
+          <span class="status-pill status-pill--error">No disponible</span>
+          {% endif %}
+        </div>
+        <div class="fuente-card__body">
+          {% if fuentes.mora.disponible %}
+          <div class="dato">
+            <span class="label">Días de atraso</span>
+            <span class="value mono">{{ fuentes.mora.datos.dias_atraso }}</span>
+          </div>
+          <div class="dato">
+            <span class="label">Atrasos recientes</span>
+            {% if fuentes.mora.datos.tiene_atrasos %}
+            <span class="bool-tag bool-tag--negativo">Sí</span>
+            {% else %}
+            <span class="bool-tag bool-tag--positivo">No</span>
+            {% endif %}
+          </div>
+          {% else %}
+          <p class="fuente-card__error">{{ fuentes.mora.error }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {# --- Identidad --- #}
+      <div class="fuente-card">
+        <div class="fuente-card__header">
+          <span class="fuente-card__titulo">Validación de identidad</span>
+          {% if fuentes.identidad.disponible %}
+          <span class="status-pill status-pill--ok">Cargado</span>
+          {% else %}
+          <span class="status-pill status-pill--error">No disponible</span>
+          {% endif %}
+        </div>
+        <div class="fuente-card__body">
+          {% if fuentes.identidad.disponible %}
+          <div class="dato">
+            <span class="label">Identidad validada</span>
+            {% if fuentes.identidad.datos.identidad_validada %}
+            <span class="bool-tag bool-tag--positivo">Sí</span>
+            {% else %}
+            <span class="bool-tag bool-tag--negativo">No</span>
+            {% endif %}
+          </div>
+          <div class="dato">
+            <span class="label">Método</span>
+            <span class="value mono">{{ fuentes.identidad.datos.metodo_validacion }}</span>
+          </div>
+          {% else %}
+          <p class="fuente-card__error">{{ fuentes.identidad.error }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+  </div>
+
+</body>
+
+</html>
